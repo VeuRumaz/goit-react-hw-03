@@ -1,64 +1,45 @@
+// App.jsx
 import React, { useState, useEffect } from "react";
-import Feedback from "./components/Feedback/Feedback";
-import Options from "./components/Options/Options";
-import Notification from "./components/Notification/Notification";
-import "./App.module.css";
+import { User } from "lucide-react";
+import ContactForm from "./components/ContactForm/ContactForm";
+import ContactList from "./components/ContactList/ContactList";
+import SearchBox from "./components/SearchBox/SearchBox";
+import styles from "./App.module.css";
 
 const App = () => {
-  const [feedback, setFeedback] = useState({
-    good: 0,
-    neutral: 0,
-    bad: 0,
+  const [contacts, setContacts] = useState(() => {
+    const savedContacts = localStorage.getItem("contacts");
+    return savedContacts ? JSON.parse(savedContacts) : [];
   });
+  const [filter, setFilter] = useState("");
 
   useEffect(() => {
-    const savedFeedback = localStorage.getItem("feedback");
-    if (savedFeedback) {
-      setFeedback(JSON.parse(savedFeedback));
-    }
-  }, []);
+    localStorage.setItem("contacts", JSON.stringify(contacts));
+  }, [contacts]);
 
-  useEffect(() => {
-    localStorage.setItem("feedback", JSON.stringify(feedback));
-  }, [feedback]);
-
-  const updateFeedback = (feedbackType) => {
-    setFeedback((prevFeedback) => ({
-      ...prevFeedback,
-      [feedbackType]: prevFeedback[feedbackType] + 1,
-    }));
+  const addContact = (newContact) => {
+    setContacts((prevContacts) => [...prevContacts, newContact]);
   };
 
-  const resetFeedback = () => {
-    setFeedback({ good: 0, neutral: 0, bad: 0 });
+  const deleteContact = (contactId) => {
+    setContacts((prevContacts) =>
+      prevContacts.filter((contact) => contact.id !== contactId)
+    );
   };
 
-  const totalFeedback = feedback.good + feedback.neutral + feedback.bad;
-  const positiveFeedbackPercentage = totalFeedback
-    ? Math.round((feedback.good / totalFeedback) * 100)
-    : 0;
+  const filteredContacts = contacts.filter((contact) =>
+    contact.name.toLowerCase().includes(filter.toLowerCase())
+  );
 
   return (
-    <div className="App">
-      <h1>Sip Happens Café</h1>
-      <p>
-        Please leave your feedback about our service by selecting one of the
-        options below.
-      </p>
-      <Options
-        updateFeedback={updateFeedback}
-        resetFeedback={resetFeedback}
-        totalFeedback={totalFeedback}
+    <div className={styles.app}>
+      <h1>Phonebook</h1>
+      <ContactForm onSubmit={addContact} />
+      <SearchBox value={filter} onChange={setFilter} />
+      <ContactList
+        contacts={filteredContacts}
+        onDeleteContact={deleteContact}
       />
-      {totalFeedback > 0 ? (
-        <Feedback
-          feedback={feedback}
-          totalFeedback={totalFeedback}
-          positiveFeedbackPercentage={positiveFeedbackPercentage}
-        />
-      ) : (
-        <Notification message="No feedback given yet" />
-      )}
     </div>
   );
 };
